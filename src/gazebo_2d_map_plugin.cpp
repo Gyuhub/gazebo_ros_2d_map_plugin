@@ -45,10 +45,10 @@ void OccupancyMapFromWorld::Load(physics::WorldPtr _parent,
   if(_sdf->HasElement("map_resolution"))
     map_resolution_ = _sdf->GetElement("map_resolution")->Get<double>();
 
-  map_height_ = 0.3;
+  map_origin_ = vector3d(0, 0, 0);
 
-  if(_sdf->HasElement("map_height"))
-    map_height_ = _sdf->GetElement("map_height")->Get<double>();
+  if(_sdf->HasElement("map_origin"))
+    map_origin_ = _sdf->GetElement("map_origin")->Get<vector3d>();
 
   init_robot_x_ = 0.0;
 
@@ -139,19 +139,23 @@ bool OccupancyMapFromWorld::worldCellIntersection(const vector3d& cell_center,
 void OccupancyMapFromWorld::cell2world(unsigned int cell_x, unsigned int cell_y,
                                        double map_size_x, double map_size_y,
                                        double map_resolution,
+                                       double origin_x, double origin_y,
                                        double& world_x, double &world_y)
 {
-  world_x = cell_x * map_resolution - map_size_x/2 + map_resolution/2;
-  world_y = cell_y * map_resolution - map_size_y/2 + map_resolution/2;
+  world_x = (origin_x - map_size_x/2) + cell_x * map_resolution;
+  world_y = (origin_y - map_size_y/2) + cell_y * map_resolution;
+  return;
 }
 
 void OccupancyMapFromWorld::world2cell(double world_x, double world_y,
+                                       double origin_x, double origin_y,
                                        double map_size_x, double map_size_y,
                                        double map_resolution,
                                        unsigned int& cell_x, unsigned int& cell_y)
 {
-  cell_x = (world_x + map_size_x/2) / map_resolution;
-  cell_y = (world_y + map_size_y/2) / map_resolution;
+  cell_x = (world_x - origin_x + map_size_x/2) / map_resolution;
+  cell_y = (world_y - origin_y + map_size_y/2) / map_resolution;
+  return;
 }
 
 bool OccupancyMapFromWorld::cell2index(int cell_x, int cell_y,
@@ -188,9 +192,6 @@ bool OccupancyMapFromWorld::index2cell(int index, unsigned int cell_size_x,
 
 void OccupancyMapFromWorld::CreateOccupancyMap()
 {
-  //TODO map origin different from (0,0)
-  vector3d map_origin(0,0,map_height_);
-
   unsigned int cells_size_x = map_size_x_ / map_resolution_;
   unsigned int cells_size_y = map_size_y_ / map_resolution_;
 
@@ -205,13 +206,13 @@ void OccupancyMapFromWorld::CreateOccupancyMap()
   occupancy_map_->info.width = cells_size_x;
   occupancy_map_->info.height = cells_size_y;
 #if GAZEBO_MAJOR_VERSION >= 9
-  occupancy_map_->info.origin.position.x = map_origin.X() - map_size_x_ / 2;
-  occupancy_map_->info.origin.position.y = map_origin.Y() - map_size_y_ / 2;
-  occupancy_map_->info.origin.position.z = map_origin.Z();
+  occupancy_map_->info.origin.position.x = map_origin_.X() - map_size_x_ / 2;
+  occupancy_map_->info.origin.position.y = map_origin_.Y() - map_size_y_ / 2;
+  occupancy_map_->info.origin.position.z = map_origin_.Z();
 #else
-  occupancy_map_->info.origin.position.x = map_origin.x - map_size_x_ / 2;
-  occupancy_map_->info.origin.position.y = map_origin.y - map_size_y_ / 2;
-  occupancy_map_->info.origin.position.z = map_origin.z;
+  occupancy_map_->info.origin.position.x = map_origin_.x; // - map_size_x_ / 2;
+  occupancy_map_->info.origin.position.y = map_origin_.y; // - map_size_y_ / 2;
+  occupancy_map_->info.origin.position.z = map_origin_.z;
 #endif
   occupancy_map_->info.origin.orientation.w = 1;
 
@@ -229,8 +230,8 @@ void OccupancyMapFromWorld::CreateOccupancyMap()
 
   //find initial robot cell
   unsigned int cell_x, cell_y, map_index;
-  world2cell(robot_x, robot_y, map_size_x_, map_size_y_, map_resolution_,
-             cell_x, cell_y);
+  world2cell(robot_x, robot_y, map_origin_[0], map_origin_[1], map_size_x_, map_size_y_,
+             map_resolution_, cell_x, cell_y);
 
   if(!cell2index(cell_x, cell_y, cells_size_x, cells_size_y, map_index))
   {
@@ -272,9 +273,9 @@ void OccupancyMapFromWorld::CreateOccupancyMap()
           if(child_val != 100 && child_val != 0 && child_val != 50)
           {
             cell2world(cell_x + i, cell_y + j, map_size_x_, map_size_y_, map_resolution_,
-                       world_x, world_y);
+                       map_origin_[0], map_origin_[1], world_x, world_y);
 
-            bool cell_occupied = worldCellIntersection(vector3d(world_x, world_y, map_height_),
+            bool cell_occupied = worldCellIntersection(vector3d(world_x, world_y, map_origin_[2]),
                                                        map_resolution_, ray);
 
             if(cell_occupied)

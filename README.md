@@ -9,18 +9,30 @@ To include the plugin, add the following line in between the `<world> </world>` 
 
 ```
 <plugin name='gazebo_occupancy_map' filename='libgazebo_2d_map_plugin.so'>
-    <map_resolution>0.1</map_resolution> <!-- in meters, optional, default 0.1 -->
-    <map_height>0.3</map_height>         <!-- in meters, optional, default 0.3 -->
-    <map_size_x>10</map_size_x>          <!-- in meters, optional, default 10 -->
-    <map_size_y>10</map_size_y>          <!-- in meters, optional, default 10 -->
-    <init_robot_x>0</init_robot_x>          <!-- x coordinate in meters, optional, default 0 -->
-    <init_robot_y>0</init_robot_y>          <!-- y coordinate in meters, optional, default 0 -->
+    <map_resolution>0.1</map_resolution>            <!-- in meters, optional, default 0.1 -->
+    <map_origin>0.0 0.0 0.0</map_origin>            <!-- in meters, optional, default [0.0, 0.0, 0.0] -->
+    <map_size_x>10</map_size_x>                     <!-- in meters, optional, default 10 -->
+    <map_size_y>10</map_size_y>                     <!-- in meters, optional, default 10 -->
+    <init_robot_x>0</init_robot_x>                  <!-- x coordinate in meters, optional, default 0 -->
+    <init_robot_y>0</init_robot_y>                  <!-- y coordinate in meters, optional, default 0 -->
 </plugin>
 ```
 
-The parameters `map_size_x` and `map_size_y` should the total lengths through x and y-axis. And the parameters `init_robot_x` and `init_robot_y` become the origin of newly created map which has a type of `nav_msgs/OccupancyGrid`.
+The parameter `map_origin` stands for the center(origin) position of the Gazebo map calculated from the origin frame of the Gazebo. This origin position will be used for the `nav_msgs/OccupancyGrid`.
 
-⚠️ Note that the reference frame of all parameters is the **origin frame of the Gazebo**!
+For example, if you set the **center position** of the square map to match **the origin frame** of the Gazebo, you should set the `map_origin` as 
+```
+<map_origin>0 0 0</map_origin>
+```
+
+Or if you set the **left-bottom position** of the square map to match **the origin frame** of the Gazebo, you should set the `map_origin` as 
+```
+<map_origin>$(map_size_x)/2 $(map_size_y)/2 0</map_origin>
+<!-- change the value of the parameter with the shape of your map. -->
+```
+Then, 
+
+The parameters `map_size_x` and `map_size_y` should the total lengths through x and y-axis. And the parameters `init_robot_x` and `init_robot_y` become x and y position of the robot calculated from the **left-bottom frame** of the Gazebo map.
 
 To generate the map, call the `/gazebo_2d_map_plugin/generate_map` ros service:
 

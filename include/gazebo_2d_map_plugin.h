@@ -82,9 +82,11 @@ class OccupancyMapFromWorld : public WorldPlugin {
 
   static void cell2world(unsigned int cell_x, unsigned int cell_y,
                          double map_size_x, double map_size_y, double map_resolution,
+                         double origin_x, double origin_y,
                          double& world_x, double &world_y);
 
   static void world2cell(double world_x, double world_y,
+                         double origin_x, double origin_y,
                          double map_size_x, double map_size_y, double map_resolution,
                          unsigned int& cell_x, unsigned int& cell_y);
 
@@ -106,7 +108,7 @@ class OccupancyMapFromWorld : public WorldPlugin {
   nav_msgs::OccupancyGrid* occupancy_map_;
   std::string name_;
   double map_resolution_;
-  double map_height_;
+  vector3d map_origin_;
   double map_size_x_;
   double map_size_y_;
   double init_robot_x_;
