@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include "gazebo_2Dmap_plugin.h"
+#include "gazebo_2d_map_plugin.h"
 
 #include <gazebo/common/Time.hh>
 #include <gazebo/common/CommonTypes.hh>
@@ -38,7 +38,7 @@ void OccupancyMapFromWorld::Load(physics::WorldPtr _parent,
 
   map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map2d", 1, true);
   map_service_ = nh_.advertiseService(
-        "gazebo_2Dmap_plugin/generate_map", &OccupancyMapFromWorld::ServiceCallback, this);
+        "gazebo_2d_map_plugin/generate_map", &OccupancyMapFromWorld::ServiceCallback, this);
 
   map_resolution_ = 0.1;
 
@@ -47,8 +47,8 @@ void OccupancyMapFromWorld::Load(physics::WorldPtr _parent,
 
   map_height_ = 0.3;
 
-  if(_sdf->HasElement("map_z"))
-    map_height_ = _sdf->GetElement("map_z")->Get<double>();
+  if(_sdf->HasElement("map_height"))
+    map_height_ = _sdf->GetElement("map_height")->Get<double>();
 
   init_robot_x_ = 0.0;
 
@@ -69,111 +69,7 @@ void OccupancyMapFromWorld::Load(physics::WorldPtr _parent,
 
   if(_sdf->HasElement("map_size_y"))
     map_size_y_ = _sdf->GetElement("map_size_y")->Get<double>();
-
-  sdf::ElementPtr contactSensorSDF = _sdf->GetElement("contactSensor");
-
-  //  std::string service_name = "world/get_octomap";
-  //  std::string octomap_pub_topic = "world/octomap";
-  //  getSdfParam<std::string>(_sdf, "octomapPubTopic", octomap_pub_topic,
-  //                           octomap_pub_topic);
-  //  getSdfParam<std::string>(_sdf, "octomapServiceName", service_name,
-  //                           service_name);
-
-  //  gzlog << "Advertising service: " << service_name << std::endl;
-  //  srv_ = node_handle_.advertiseService(
-  //      service_name, &OctomapFromGazeboWorld::ServiceCallback, this);
-  //  octomap_publisher_ =
-  //      node_handle_.advertise<octomap_msgs::Octomap>(octomap_pub_topic, 1, true);
 }
-
-//bool OctomapFromGazeboWorld::ServiceCallback(
-//    robotino_sim::Octomap::Request& req, robotino_sim::Octomap::Response& res) {
-//  std::cout << "Creating octomap with origin at (" << req.bounding_box_origin.x
-//        << ", " << req.bounding_box_origin.y << ", "
-//        << req.bounding_box_origin.z << "), and bounding box lengths ("
-//        << req.bounding_box_lengths.x << ", " << req.bounding_box_lengths.y
-//        << ", " << req.bounding_box_lengths.z
-//        << "), and leaf size: " << req.leaf_size << ".\n";
-//  CreateOctomap(req);
-//  if (req.filename != "") {
-//    if (octomap_) {
-//      std::string path = req.filename;
-//      octomap_->writeBinary(path);
-//      std::cout << std::endl << "Octree saved as " << path << std::endl;
-//    } else {
-//      ROS_ERROR("The octree is NULL. Will not save that.");
-//    }
-//  }
-//  common::Time now = world_->GetSimTime();
-//  res.map.header.frame_id = "world";
-//  res.map.header.stamp = ros::Time(now.sec, now.nsec);
-
-//  if (!octomap_msgs::binaryMapToMsg(*octomap_, res.map)) {
-//    ROS_ERROR("Error serializing OctoMap");
-//  }
-
-//  if (req.publish_octomap) {
-//    gzlog << "Publishing Octomap." << std::endl;
-//    octomap_publisher_.publish(res.map);
-//  }
-
-//  common::SphericalCoordinatesPtr sphericalCoordinates = world_->GetSphericalCoordinates();
-//#if GAZEBO_MAJOR_VERSION >= 6
-//  ignition::math::Vector3d origin_cartesian(0.0, 0.0, 0.0);
-//  ignition::math::Vector3d origin_spherical = sphericalCoordinates->
-//      SphericalFromLocal(origin_cartesian);
-
-//  res.origin_latitude = origin_spherical.X();
-//  res.origin_longitude = origin_spherical.Y();
-//  res.origin_altitude = origin_spherical.Z();
-//  return true;
-//#else
-//  math::Vector3 origin_cartesian(0.0, 0.0, 0.0);
-//  math::Vector3 origin_spherical = sphericalCoordinates->
-//         SphericalFromLocal(origin_cartesian);
-
-//  res.origin_latitude = origin_spherical.x;
-//  res.origin_longitude = origin_spherical.y;
-//  res.origin_altitude = origin_spherical.z;
-//  return true;
-//#endif
-//}
-
-//void OctomapFromGazeboWorld::FloodFill(
-//    const math::Vector3& seed_point, const math::Vector3& bounding_box_origin,
-//    const math::Vector3& bounding_box_lengths, const double leaf_size) {
-//  octomap::OcTreeNode* seed =
-//      octomap_->search(seed_point.x, seed_point.y, seed_point.z);
-//  // do nothing if point occupied
-//  if (seed != NULL && seed->getOccupancy()) return;
-
-//  std::stack<octomath::Vector3> to_check;
-//  to_check.push(octomath::Vector3(seed_point.x, seed_point.y, seed_point.z));
-
-//  while (to_check.size() > 0) {
-//    octomath::Vector3 p = to_check.top();
-
-//    if ((p.x() > bounding_box_origin.x - bounding_box_lengths.x / 2) &&
-//        (p.x() < bounding_box_origin.x + bounding_box_lengths.x / 2) &&
-//        (p.y() > bounding_box_origin.y - bounding_box_lengths.y / 2) &&
-//        (p.y() < bounding_box_origin.y + bounding_box_lengths.y / 2) &&
-//        (p.z() > bounding_box_origin.z - bounding_box_lengths.z / 2) &&
-//        (p.z() < bounding_box_origin.z + bounding_box_lengths.z / 2) &&
-//        (!octomap_->search(p))) {
-//      octomap_->setNodeValue(p, 0);
-//      to_check.pop();
-//      to_check.push(octomath::Vector3(p.x() + leaf_size, p.y(), p.z()));
-//      to_check.push(octomath::Vector3(p.x() - leaf_size, p.y(), p.z()));
-//      to_check.push(octomath::Vector3(p.x(), p.y() + leaf_size, p.z()));
-//      to_check.push(octomath::Vector3(p.x(), p.y() - leaf_size, p.z()));
-//      to_check.push(octomath::Vector3(p.x(), p.y(), p.z() + leaf_size));
-//      to_check.push(octomath::Vector3(p.x(), p.y(), p.z() - leaf_size));
-
-//    } else {
-//      to_check.pop();
-//    }
-//  }
-//}
 
 bool OccupancyMapFromWorld::ServiceCallback(std_srvs::Empty::Request& req,
                                             std_srvs::Empty::Response& res)
@@ -181,7 +77,6 @@ bool OccupancyMapFromWorld::ServiceCallback(std_srvs::Empty::Request& req,
   CreateOccupancyMap();
   return true;
 }
-
 
 bool OccupancyMapFromWorld::worldCellIntersection(const vector3d& cell_center,
                                                 const double cell_length,

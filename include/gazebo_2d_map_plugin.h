@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#ifndef GAZEBO_2DMAP_PLUGIN_H
-#define GAZEBO_2DMAP_PLUGIN_H
+#ifndef GAZEBO_2D_MAP_PLUGIN_H
+#define GAZEBO_2D_MAP_PLUGIN_H
 
 #include <iostream>
 #include <math.h>
@@ -52,7 +52,7 @@ namespace gazebo {
 class OccupancyMapFromWorld : public WorldPlugin {
  public:
   OccupancyMapFromWorld()
-      : WorldPlugin(), name_("gazebo_2Dmap_plugin")
+      : WorldPlugin(), name_("gazebo_2d_map_plugin")
   {
     ROS_INFO_NAMED(name_, "occupancy map plugin started");
   }
@@ -115,4 +115,4 @@ class OccupancyMapFromWorld : public WorldPlugin {
 
 } // namespace gazebo
 
-#endif  // GAZEBO_2DMAP_PLUGIN_H
+#endif  // GAZEBO_2D_MAP_PLUGIN_H
